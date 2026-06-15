@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+
+# Environement Virtuel
+.venv/
+
+# Fichiers de médias uploadés
+media/
+
+# Fichiers statiques collectés
+staticfiles/
+
+# Environnement et secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
