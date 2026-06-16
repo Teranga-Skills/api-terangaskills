@@ -10,7 +10,9 @@ from .views.centre_views import CentreEtatCivilViewSet
 router = DefaultRouter()
 from .views.reference_views import RegionViewSet, CommuneViewSet
 
+from .views.citoyen_views import CitoyenViewSet
 
+router.register("citoyens", CitoyenViewSet, basename="citoyens")
 router.register("regions", RegionViewSet, basename="regions")
 router.register("communes", CommuneViewSet, basename="communes")
 
