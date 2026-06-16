@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from accounts.models import UserRole
+from users.models import UserRole
 
 User = get_user_model()
 
@@ -40,7 +40,7 @@ class AuthTestCase(APITestCase):
 
     def login(self, email, password):
         return self.client.post(
-            reverse("accounts:login"),
+            reverse("users:login"),
             {"email": email, "password": password},
             format="json",
         )
@@ -69,7 +69,7 @@ class AuthTestCase(APITestCase):
         refresh = login_response.data["refresh"]
 
         response = self.client.post(
-            reverse("accounts:refresh"),
+            reverse("users:refresh"),
             {"refresh": refresh},
             format="json",
         )
@@ -85,7 +85,7 @@ class AuthTestCase(APITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
         logout_response = self.client.post(
-            reverse("accounts:logout"),
+            reverse("users:logout"),
             {"refresh": refresh},
             format="json",
         )
@@ -93,7 +93,7 @@ class AuthTestCase(APITestCase):
 
         # Le même refresh token ne doit plus être utilisable.
         retry_response = self.client.post(
-            reverse("accounts:refresh"),
+            reverse("users:refresh"),
             {"refresh": refresh},
             format="json",
         )
@@ -114,7 +114,7 @@ class AuthTestCase(APITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
         response = self.client.post(
-            reverse("accounts:users"),
+            reverse("users:users"),
             {
                 "email": "agent1@example.com",
                 "password": "AgentPass123!",
@@ -142,7 +142,7 @@ class AuthTestCase(APITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
         response = self.client.post(
-            reverse("accounts:users"),
+            reverse("users:users"),
             {
                 "email": "agent2@example.com",
                 "password": "AgentPass123!",
@@ -155,5 +155,5 @@ class AuthTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_me_without_token(self):
-        response = self.client.get(reverse("accounts:me"))
+        response = self.client.get(reverse("users:me"))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

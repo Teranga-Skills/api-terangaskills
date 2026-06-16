@@ -69,10 +69,28 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+
     email = models.EmailField(unique=True, db_index=True)
+
     first_name = models.CharField(max_length=150)
+
     last_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20, blank=True, null=True)
+
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+
+    centre = models.ForeignKey(
+        "signalements.CentreEtatCivil",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="agents"
+    )
+
 
     role = models.CharField(
         max_length=10,
@@ -114,20 +132,26 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ]
 
     def save(self, *args, **kwargs):
-        # Normalisation défensive, y compris lors d’un save manuel hors manager.
+
+        if self.role == UserRole.AGENT and self.centre is None:
+            raise ValueError(
+                "Un agent doit être affecté à un centre d'état civil."
+            )
+
+
         if self.email:
             self.email = self.email.strip().lower()
 
-        # Cohérence sécurité/métier :
-        # - un ADMIN métier doit pouvoir accéder au dashboard Django
-        # - un AGENT ne doit pas obtenir l’accès admin par erreur
-        # - un superuser garde toujours is_staff=True
+
         if self.is_superuser:
             self.is_staff = True
+
         elif self.role == UserRole.ADMIN:
             self.is_staff = True
+
         else:
             self.is_staff = False
+
 
         super().save(*args, **kwargs)
 

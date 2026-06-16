@@ -10,7 +10,7 @@ from .views import (
     UserListCreateView,
 )
 
-app_name = "accounts"
+app_name = "users"
 
 urlpatterns = [
     path("auth/login/", LoginView.as_view(), name="login"),

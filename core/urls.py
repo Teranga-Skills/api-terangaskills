@@ -6,7 +6,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/', include(('accounts.urls', 'accounts'), namespace="accounts")),
+    path('api/v1/', include(('users.urls', 'users'), namespace="users")),
 
     # Documentation Swagger
     # path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

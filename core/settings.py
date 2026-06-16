@@ -49,11 +49,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
 
-    'accounts',
+    'users',
     'signalements',
 ]
 
-AUTH_USER_MODEL = "accounts.CustomUser"
+AUTH_USER_MODEL = "users.CustomUser"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -79,7 +79,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
-    "TOKEN_OBTAIN_SERIALIZER": "apps.accounts.serializers.LoginSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "apps.users.serializers.LoginSerializer",
 }
 
 MIDDLEWARE = [

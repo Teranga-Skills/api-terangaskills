@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 import uuid
 
@@ -31,8 +32,10 @@ class ActeEtatCivil(models.Model):
 
     centre = models.ForeignKey(CentreEtatCivil, on_delete=models.SET_NULL, null=True, related_name="actes")
 
+
+
     agent = models.ForeignKey(
-        "users.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
