@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 from datetime import timedelta
 import os
 
+import dj_database_url
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,10 +31,9 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-fallback-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Application definition
 
@@ -122,16 +124,25 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Production (Render)
+    DATABASES = {
+        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    # Développement local
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -173,3 +184,8 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # affiche dans
 DEFAULT_FROM_EMAIL = "no-reply@example.com"
 FRONTEND_URL = "http://localhost:3000"
 PASSWORD_RESET_TIMEOUT = 259200  # 3 jours
+
+# Fichiers statiques avec Whitenoise
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
