@@ -6,7 +6,10 @@ from .views.reference_views import RegionViewSet, CommuneViewSet
 from .views.citoyen_views import CitoyenViewSet
 from .views.acte_views import ActeEtatCivilViewSet
 from .views.document_views import DocumentViewSet
-
+from signalements.views.synchronisation_views import (
+    EnvoyerSynchronisationAPIView,
+    StatutSynchronisationAPIView
+)
 from signalements.views.scan import ScanAPIView
 from signalements.views.dashboard_views import (
     DashboardStatsAPIView,
@@ -32,6 +35,8 @@ urlpatterns = [
 
     path("", include(router.urls)),
     path("copilot/", CopilotAPIView.as_view()),
+    path("synchronisation/envoyer/", EnvoyerSynchronisationAPIView.as_view()),
+    path("synchronisation/statut/", StatutSynchronisationAPIView.as_view()),
 
     # SCAN IA
     path("scan/", ScanAPIView.as_view()),
