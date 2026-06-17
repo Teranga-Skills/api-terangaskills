@@ -89,3 +89,4 @@ Retourne uniquement un JSON valide sans texte supplémentaire :
     print(response.json())
 
     return response.json()
+

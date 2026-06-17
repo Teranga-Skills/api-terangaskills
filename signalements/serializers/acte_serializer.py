@@ -16,11 +16,12 @@ class ActeEtatCivilSerializer(serializers.ModelSerializer):
 
         request = self.context["request"]
 
-        centre = validated_data["centre"]
+        centre = validated_data.get("centre")
+        centre_code = centre.code if centre else "GEN"
 
         numero = generer_numero_acte(
             validated_data["type_acte"],
-            centre.code
+            centre_code
         )
 
         acte = ActeEtatCivil.objects.create(
