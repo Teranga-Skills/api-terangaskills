@@ -23,7 +23,9 @@ from .serializers import (
     UserCreateSerializer,
     UserDetailSerializer,
     UserUpdateSerializer,
+    SetPasswordSerializer,
 )
+from .emails import send_welcome_email
 
 User = get_user_model()
 
@@ -303,6 +305,8 @@ class UserListCreateView(APIView):
                     }
                 ),
             )
+            
+            send_welcome_email(user, role_label="compte agent")
 
         output = UserDetailSerializer(user, context={"request": request}).data
         output["temporary_password"] = initial_password
@@ -393,5 +397,30 @@ class ChangePasswordView(APIView):
 
         return Response(
             {"detail": "Mot de passe modifié avec succès. Les refresh tokens ont été révoqués."},
+            status=status.HTTP_200_OK,
+        )
+    
+class SetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SetPasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        blacklist_all_user_refresh_tokens(user)
+
+        AuditLog.objects.create(
+            user=user,
+            action=AuditAction.CHANGE_PASSWORD,
+            ip_address=get_client_ip(request),
+            success=True,
+            details={"method": "email_link", "timestamp": timezone.now().isoformat()},
+        )
+
+        return Response(
+            {"detail": "Mot de passe défini. Vous pouvez vous connecter."},
             status=status.HTTP_200_OK,
         )

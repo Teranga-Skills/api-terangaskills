@@ -196,23 +196,22 @@ class AuditLog(models.Model):
         return f"{self.action} — {user_label} — {self.timestamp:%Y-%m-%d %H:%M:%S}"
 
 
+# APRÈS
 @receiver(post_save, sender=CustomUser)
-def log_user_creation(sender, instance: CustomUser, created: bool, **kwargs):
-    """
-    Auto-log uniquement pour la création initiale sans created_by.
-    Cela couvre notamment le bootstrap initial via createsuperuser/seed_admin
-    sans dupliquer les logs métier de l’endpoint /api/v1/users/.
-    """
-    if created and instance.created_by is None:
-        AuditLog.objects.create(
-            user=instance,
-            action=AuditAction.CREATE_USER,
-            ip_address=None,
-            success=True,
-            details={
-                "auto_logged": True,
-                "bootstrap": True,
-                "email": instance.email,
-                "role": instance.role,
-            },
-        )
+def on_user_created(sender, instance: CustomUser, created: bool, **kwargs):
+    if not created:
+        return
+    if instance.created_by is not None:
+        return  # Géré par la vue API
+
+    AuditLog.objects.create(
+        user=instance,
+        action=AuditAction.CREATE_USER,
+        ip_address=None,
+        success=True,
+        details={"auto_logged": True, "bootstrap": True, "email": instance.email, "role": instance.role},
+    )
+
+    from .emails import send_welcome_email
+    role_label = "compte administrateur" if instance.is_superuser else "compte"
+    send_welcome_email(instance, role_label=role_label)

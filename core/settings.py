@@ -168,3 +168,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # affiche dans le terminal en dev
+DEFAULT_FROM_EMAIL = "no-reply@example.com"
+FRONTEND_URL = "http://localhost:3000"
+PASSWORD_RESET_TIMEOUT = 259200  # 3 jours

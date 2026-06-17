@@ -6,8 +6,13 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 
 from .models import UserRole
+
+_token_generator = PasswordResetTokenGenerator()
 
 User = get_user_model()
 
@@ -89,12 +94,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["email", "password", "first_name", "last_name", "role", "phone"]
+        fields = ["email", "password", "first_name", "last_name", "role", "phone", "centre"]
         extra_kwargs = {
             "email": {"required": True},
             "first_name": {"required": True},
             "last_name": {"required": True},
             "role": {"required": False},
+            "centre": {"required": True},
             "phone": {"required": False, "allow_null": True, "allow_blank": True},
         }
 
@@ -163,4 +169,27 @@ class ChangePasswordSerializer(serializers.Serializer):
         if user.check_password(attrs["new_password"]):
             raise serializers.ValidationError({"new_password": "Le nouveau mot de passe doit être différent de l’ancien."})
 
+        return attrs
+    
+class SetPasswordSerializer(serializers.Serializer):
+    uid = serializers.CharField(write_only=True)
+    token = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        try:
+            user_pk = force_str(urlsafe_base64_decode(attrs["uid"]))
+            user = User.objects.get(pk=user_pk)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError({"uid": "Lien invalide."})
+
+        if not _token_generator.check_token(user, attrs["token"]):
+            raise serializers.ValidationError({"token": "Lien invalide ou expiré."})
+
+        if attrs["new_password"] != attrs["confirm"]:
+            raise serializers.ValidationError({"confirm": "La confirmation ne correspond pas."})
+
+        validate_password(attrs["new_password"], user)
+        attrs["user"] = user
         return attrs
