@@ -5,7 +5,21 @@ import os
 
 def ocr_extract(file):
 
-    encoded = base64.b64encode(file.read()).decode()
+    # Détecter le type d'entrée (fichier Django, chemin local ou base64 direct)
+    if isinstance(file, str):
+        if len(file) > 1000 or file.startswith("data:"):
+            # Déjà encodé en base64
+            if "," in file:
+                encoded = file.split(",")[1]
+            else:
+                encoded = file
+        else:
+            # Chemin local vers le fichier
+            with open(file, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode()
+    else:
+        # Fichier Django / objet file-like
+        encoded = base64.b64encode(file.read()).decode()
 
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -19,20 +33,22 @@ def ocr_extract(file):
         "messages": [
             {
                 "role": "system",
-                "content": "Tu es un OCR. Retourne uniquement du JSON."
+                "content": "Tu es un OCR intelligent de documents d'état civil sénégalais. Analyse l'image et retourne uniquement un objet JSON contenant les champs extraits sans aucun autre texte."
             },
             {
                 "role": "user",
-                "content": f"""
-Extraire :
-- nom
-- prenom
-- date_naissance
-- numero_identification
-
-IMAGE:
-{encoded}
-"""
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Extrais les champs suivants sous forme de JSON : nom, prenom, date_naissance (au format JJ/MM/AAAA), numero_identification."
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{encoded}"
+                        }
+                    }
+                ]
             }
         ]
     }

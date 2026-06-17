@@ -11,10 +11,10 @@ class ScanAPIView(APIView):
 
     def post(self, request):
 
-        file = request.FILES.get("document")
+        file = request.FILES.get("document") or request.FILES.get("file")
 
         if not file:
-            return Response({"error": "document requis"}, status=400)
+            return Response({"error": "document requis (clé 'document' ou 'file')"}, status=400)
 
         result = run_pipeline(file, request.user)
 

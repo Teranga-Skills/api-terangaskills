@@ -1,3 +1,5 @@
+import json
+import re
 from signalements.services.ocr import ocr_extract
 from signalements.models import AnalyseIA, ActeEtatCivil
 from django.db.models import Q
@@ -10,13 +12,29 @@ def run_pipeline(file, user):
 
     data = ocr_result.get("choices", [{}])[0].get("message", {}).get("content", "{}")
 
-    # ici simplifié (dans vrai hackathon tu parseras JSON)
+    # Parser le JSON extrait par l'OCR
     extracted = {
         "nom": "UNKNOWN",
         "prenom": "UNKNOWN",
         "date_naissance": "UNKNOWN",
         "numero_identification": "UNKNOWN"
     }
+
+    if data:
+        try:
+            cleaned = data.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
+                cleaned = re.sub(r"\n```$", "", cleaned)
+            parsed = json.loads(cleaned.strip())
+            
+            # Récupérer les données avec fallbacks
+            extracted["nom"] = str(parsed.get("nom") or parsed.get("nom_famille") or "UNKNOWN").upper().strip()
+            extracted["prenom"] = str(parsed.get("prenom") or parsed.get("prenoms") or "UNKNOWN").strip()
+            extracted["date_naissance"] = str(parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN").strip()
+            extracted["numero_identification"] = str(parsed.get("numero_identification") or parsed.get("numeroDocument") or parsed.get("numero_acte") or parsed.get("numero") or "UNKNOWN").strip()
+        except Exception:
+            pass
 
     # 2. MATCH BASE EXISTANTE
     matched = None
