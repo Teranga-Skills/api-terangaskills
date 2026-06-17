@@ -1,0 +1,418 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>
+        {% block title %}
+        DetectSen — Admin
+        {% endblock %}
+    </title>
+
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link href="
+    https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap
+    " rel="stylesheet">
+
+
+    <!-- CSS global -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+
+    {% block extra_head %}
+    {% endblock %}
+
+
+</head>
+
+
+<body>
+
+
+<!-- ================= SIDEBAR ================= -->
+
+<nav id="sidebar">
+
+
+    <div class="sidebar-logo">
+
+
+        <div class="logo-badge">
+
+
+            <div class="logo-icon">
+                🛡️
+            </div>
+
+
+            <div>
+
+                <div class="logo-text">
+                    Teranga Civil AI
+                </div>
+
+
+                <div class="logo-sub">
+                    ADMIN CONSOLE
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="nav-section">
+
+
+        <div class="nav-label">
+            Vue générale
+        </div>
+
+
+        <a href="{% url 'dashboard' %}"
+           class="nav-item">
+
+            <span class="nav-icon">
+                📊
+            </span>
+
+            Dashboard
+
+        </a>
+
+
+
+
+        <div class="nav-label">
+            Etat Civil
+        </div>
+
+
+        <a href="#"
+           class="nav-item">
+
+            <span class="nav-icon">
+                👥
+            </span>
+
+            Citoyens
+
+        </a>
+
+
+
+        <a href="#"
+           class="nav-item">
+
+            <span class="nav-icon">
+                📄
+            </span>
+
+            Actes
+
+        </a>
+
+
+
+        <a href="#"
+           class="nav-item">
+
+            <span class="nav-icon">
+                🏢
+            </span>
+
+            Centres
+
+        </a>
+
+
+
+
+
+        <div class="nav-label">
+            Intelligence Artificielle
+        </div>
+
+
+
+        <a href="#"
+           class="nav-item">
+
+            <span class="nav-icon">
+                🤖
+            </span>
+
+            Analyse IA
+
+        </a>
+
+
+
+        <a href="#"
+           class="nav-item">
+
+
+            <span class="nav-icon">
+                🚨
+            </span>
+
+            Fraudes
+
+
+        </a>
+
+
+
+
+
+
+        <div class="nav-label">
+            Système
+        </div>
+
+
+
+        <a href="#"
+           class="nav-item">
+
+
+            <span class="nav-icon">
+                🔐
+            </span>
+
+
+            Utilisateurs
+
+
+        </a>
+
+
+
+
+        <a href="#"
+           class="nav-item">
+
+
+            <span class="nav-icon">
+                📋
+            </span>
+
+
+            Audit Log
+
+
+        </a>
+
+
+
+    </div>
+
+
+
+
+
+    <!-- USER -->
+
+    <div class="sidebar-footer">
+
+
+        <div class="user-card">
+
+
+            <div class="user-avatar">
+
+                {{ request.user.username|first|upper }}
+
+            </div>
+
+
+
+            <div>
+
+
+                <div class="user-name">
+
+                    {{ request.user.username }}
+
+                </div>
+
+
+                <div class="user-role">
+
+                    Administrateur
+
+                </div>
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+    </div>
+
+
+</nav>
+
+
+
+
+
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div id="main">
+
+
+
+    <!-- TOPBAR -->
+
+
+    <header class="topbar">
+
+
+
+        <div>
+
+
+            <div class="topbar-title">
+
+
+                {% block page_title %}
+                Dashboard
+                {% endblock %}
+
+
+            </div>
+
+
+
+            <div class="topbar-sub">
+
+
+                {% block page_sub %}
+
+                {% now "j F Y — H:i" %}
+
+                {% endblock %}
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+        <div class="topbar-right">
+
+
+            <button class="topbar-btn">
+
+                🔔
+
+            </button>
+
+
+
+            <button class="topbar-btn">
+
+                ⚙️
+
+            </button>
+
+
+
+            <a href="{% url 'logout' %}"
+               class="topbar-btn">
+
+
+                🚪
+
+
+            </a>
+
+
+
+        </div>
+
+
+
+
+    </header>
+
+
+
+
+
+
+    <!-- PAGE CONTENT -->
+
+
+    <main class="page-content">
+
+
+        {% block content %}
+
+        {% endblock %}
+
+
+
+    </main>
+
+
+
+
+</div>
+
+
+
+
+
+
+{% block modals %}
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+{% endblock %}
+
+
+
+</body>
+
+
+</html>
