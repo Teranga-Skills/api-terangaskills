@@ -40,7 +40,39 @@ def ocr_extract(file):
                 "content": [
                     {
                         "type": "text",
-                        "text": "Extrais les champs suivants sous forme de JSON : nom, prenom, date_naissance (au format JJ/MM/AAAA), numero_identification."
+                        "text": """
+Tu es un moteur d'extraction de données spécialisé dans les documents administratifs des collectivités territoriales du Sénégal.
+
+Analyse le document fourni et extrais uniquement les informations suivantes :
+
+- nom
+- prenom
+- date_naissance
+- numero_identification
+
+Règles d'extraction :
+
+1. Le nom et le prénom doivent être retournés tels qu'ils apparaissent dans le document, sans modification.
+2. Pour la date de naissance :
+   - Rechercher les mentions telles que « Né(e) le », « Date de naissance », ou toute formulation équivalente.
+   - Convertir systématiquement la date au format JJ/MM/AAAA.
+3. Pour le numéro d'identification :
+   - Rechercher les numéros de carte nationale d'identité, numéro national d'identification, numéro d'acte ou tout identifiant administratif pertinent.
+   - Retourner uniquement la valeur du numéro.
+4. Si une information est absente, illisible ou non identifiable avec certitude, retourner null.
+5. Ne jamais inventer ni déduire une valeur.
+6. Ignorer les informations concernant les parents, témoins, agents municipaux, maires ou officiers d'état civil.
+7. Si plusieurs personnes sont mentionnées, extraire uniquement les informations de la personne principale concernée par le document.
+
+Retourne uniquement un JSON valide sans texte supplémentaire :
+
+{
+  "nom": "string|null",
+  "prenom": "string|null",
+  "date_naissance": "JJ/MM/AAAA|null",
+  "numero_identification": "string|null"
+}
+"""
                     },
                     {
                         "type": "image_url",
@@ -54,5 +86,6 @@ def ocr_extract(file):
     }
 
     response = requests.post(url, json=payload, headers=headers)
+    print(response.json())
 
     return response.json()
