@@ -2,22 +2,43 @@ from django.db import models
 import uuid
 from signalements.models import ActeEtatCivil
 
+
 class AnalyseIA(models.Model):
+
+    RISK_LEVEL = (
+        ("LOW", "Low"),
+        ("MEDIUM", "Medium"),
+        ("HIGH", "High"),
+    )
+
+    DECISION = (
+        ("VALID", "Valid"),
+        ("SUSPECT", "Suspect"),
+        ("FRAUD", "Fraud"),
+    )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    acte = models.OneToOneField(ActeEtatCivil, on_delete=models.CASCADE)
+    acte = models.ForeignKey(ActeEtatCivil, on_delete=models.SET_NULL, null=True)
 
-    texte_ocr = models.TextField()
+    ocr_text = models.TextField()
 
-    donnees_extraites = models.JSONField()
+    extracted_data = models.JSONField()
 
-    score_fraude = models.IntegerField(default=0)
+    matched_acte = models.ForeignKey(
+        ActeEtatCivil,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="matches"
+    )
 
-    score_doublon = models.FloatField(default=0)
+    similarity_score = models.FloatField(default=0)
+    fraud_score = models.IntegerField(default=0)
 
-    niveau_risque = models.CharField(max_length=20)
+    risk_level = models.CharField(max_length=20, choices=RISK_LEVEL)
+    decision = models.CharField(max_length=20, choices=DECISION)
 
-    modele_utilise = models.CharField(max_length=100)
+    model_used = models.CharField(max_length=100)
 
     created_at = models.DateTimeField(auto_now_add=True)
