@@ -16,6 +16,7 @@ from signalements.views.dashboard_views import (
     DashboardTopCentresRisqueAPIView,
     DashboardActesSuspectsAPIView
 )
+from signalements.views.copilot_views import CopilotAPIView
 
 router = DefaultRouter()
 
@@ -30,6 +31,7 @@ router.register("centres", CentreEtatCivilViewSet, basename="centres")
 urlpatterns = [
 
     path("", include(router.urls)),
+    path("copilot/", CopilotAPIView.as_view()),
 
     # SCAN IA
     path("scan/", ScanAPIView.as_view()),
