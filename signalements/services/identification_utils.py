@@ -30,7 +30,7 @@ def sanitize_identification(value: Optional[str]) -> str:
 
 
 def identification_starts_with_digit(value: Optional[str]) -> bool:
-    sanitized = sanitize_identification(value)
+    sanitized = sanitize_identification(value.strip())
     return bool(sanitized) and sanitized[0].isdigit()
 
 

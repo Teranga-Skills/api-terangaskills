@@ -110,6 +110,9 @@ def run_analysis(extracted: dict, user=None, ocr_text: str | None = None) -> dic
         model_used="openai/gpt-4o-mini",
     )
 
+    # print("Recherche :", extracted.get("numero_identification"))
+    # print("Longueur :", len(extracted.get("numero_identification")))
+
     return {
         "analyse_id": str(analyse.id),
         "decision": decision,
@@ -125,4 +128,6 @@ def run_pipeline(file, user):
     """Compatibilité : extraction OCR + analyse en une seule passe."""
     ocr_result = ocr_extract(file)
     extracted = _parse_ocr_content(ocr_result)
+    # print('__________________________________________________________')
+    # print(extracted)
     return run_analysis(extracted, user=user, ocr_text=str(ocr_result))
