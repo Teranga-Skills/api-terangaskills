@@ -17,3 +17,6 @@ staticfiles/
 # IDE
 .vscode/
 .idea/
+
+# Document
+documents/
