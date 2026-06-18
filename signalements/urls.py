@@ -32,7 +32,6 @@ router.register("centres", CentreEtatCivilViewSet, basename="centres")
 
 
 urlpatterns = [
-
     path("", include(router.urls)),
     path("copilot/", CopilotAPIView.as_view()),
     path("synchronisation/envoyer/", EnvoyerSynchronisationAPIView.as_view()),

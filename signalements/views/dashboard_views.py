@@ -54,7 +54,7 @@ class DashboardActesParCentreAPIView(APIView):
     def get(self, request):
 
         data = CentreEtatCivil.objects.annotate(
-            total_actes=Count("centres")
+            total_actes=Count("actes")
         ).values("id", "nom", "total_actes")
 
         return Response(data)
@@ -108,8 +108,8 @@ class DashboardTopCentresRisqueAPIView(APIView):
 
         centres = CentreEtatCivil.objects.annotate(
             fraudes=Count(
-                "centres__ai_analyses",
-                filter=Q(centres__ai_analyses__decision="FRAUD")
+                "actes__analyseia",
+                filter=Q(actes__analyseia__decision="FRAUD")
             )
         ).order_by("-fraudes")[:5]
 

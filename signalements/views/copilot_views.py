@@ -4,6 +4,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count, Q
 
 from signalements.models import ActeEtatCivil, AnalyseIA, CentreEtatCivil
 
@@ -27,7 +28,7 @@ class CopilotAPIView(APIView):
         centres = CentreEtatCivil.objects.all()
 
         top_centres = CentreEtatCivil.objects.annotate(
-            nb_fraudes=Count("centres__analyses", filter=models.Q(centres__analyses__decision="FRAUD"))
+            nb_fraudes=Count("actes__analyseia", filter=Q(actes__analyseia__decision="FRAUD"))
         ).order_by("-nb_fraudes")[:3]
 
         # 2. CONTEXTE À DONNER À L'IA

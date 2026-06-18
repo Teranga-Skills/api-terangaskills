@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from signalements.models.sync_queue import FileSynchronisation
+from signalements.models.file_synchronisation import FileSynchronisation
 
 class EnvoyerSynchronisationAPIView(APIView):
 
