@@ -1,9 +1,9 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
 
 from signalements.models.citoyen import Citoyen
 from signalements.serializers.citoyen_serializer import CitoyenSerializer
+from signalements.services.identification_utils import identifications_match
 
 
 class CitoyenViewSet(viewsets.ModelViewSet):
@@ -31,6 +31,11 @@ class CitoyenViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(date_naissance=date_naissance)
 
         if numero:
-            queryset = queryset.filter(numero_identification=numero)
+            ids_correspondants = [
+                str(c.id)
+                for c in Citoyen.objects.all()
+                if identifications_match(c.numero_identification, numero)
+            ]
+            queryset = queryset.filter(id__in=ids_correspondants)
 
         return queryset

@@ -57,8 +57,10 @@ Règles d'extraction :
    - Rechercher les mentions telles que « Né(e) le », « Date de naissance », ou toute formulation équivalente.
    - Convertir systématiquement la date au format JJ/MM/AAAA.
 3. Pour le numéro d'identification :
-   - Rechercher les numéros de carte nationale d'identité, numéro national d'identification, numéro d'acte ou tout identifiant administratif pertinent.
-   - Retourner uniquement la valeur du numéro.
+   - Rechercher tout identifiant administratif pertinent (CNI, acte, passeport, etc.).
+   - Le numéro doit toujours commencer par un chiffre (pas de lettre en tête).
+   - Retirer tout préfixe alphabétique (ex. « SN », « P », « TS ») et ne conserver que la partie numérique.
+   - Conserver tirets ou chiffres tels qu'affichés si possible.
 4. Si une information est absente, illisible ou non identifiable avec certitude, retourner null.
 5. Ne jamais inventer ni déduire une valeur.
 6. Ignorer les informations concernant les parents, témoins, agents municipaux, maires ou officiers d'état civil.

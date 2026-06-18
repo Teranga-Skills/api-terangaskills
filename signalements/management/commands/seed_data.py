@@ -37,20 +37,17 @@ class Command(BaseCommand):
             defaults={"nom": "Centre de Ziguinchor", "region": r_zig, "commune": c_zig_com, "adresse": "Mairie de Ziguinchor"}
         )
 
-        # 4. Citizens
-        # Match Ousmane Sonko (simulate OCR scans)
+        # 4. Citizens — formats variés (sans préfixe SN obligatoire)
         cit1, _ = Citoyen.objects.get_or_create(
-            numero_identification="SN-1974-008273",
+            numero_identification="1974-008273",
             defaults={"nom": "SONKO", "prenom": "Ousmane", "date_naissance": datetime.date(1974, 7, 15)}
         )
-        # Match Moussa Diop (asset mock values)
         cit2, _ = Citoyen.objects.get_or_create(
-            numero_identification="SN-2024-001234",
+            numero_identification="2024-001234",
             defaults={"nom": "DIOP", "prenom": "Moussa", "date_naissance": datetime.date(1985, 3, 12)}
         )
-        # Match Fatou Ndiaye (asset mock values)
         cit3, _ = Citoyen.objects.get_or_create(
-            numero_identification="SN-P-2023-005678",
+            numero_identification="2023-005678",
             defaults={"nom": "NDIAYE", "prenom": "Fatou", "date_naissance": datetime.date(1992, 11, 7)}
         )
 

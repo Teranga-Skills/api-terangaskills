@@ -1,8 +1,11 @@
 import json
 import re
 from signalements.services.ocr import ocr_extract
-from signalements.models import AnalyseIA, ActeEtatCivil
-from django.db.models import Q
+from signalements.services.identification_utils import (
+    find_acte_by_identification,
+    sanitize_identification,
+)
+from signalements.models import AnalyseIA
 
 
 def run_pipeline(file, user):
@@ -32,22 +35,20 @@ def run_pipeline(file, user):
             extracted["nom"] = str(parsed.get("nom") or parsed.get("nom_famille") or "UNKNOWN").upper().strip()
             extracted["prenom"] = str(parsed.get("prenom") or parsed.get("prenoms") or "UNKNOWN").strip()
             extracted["date_naissance"] = str(parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN").strip()
-            extracted["numero_identification"] = str(parsed.get("numero_identification") or parsed.get("numeroDocument") or parsed.get("numero_acte") or parsed.get("numero") or "UNKNOWN").strip()
+            raw_numero = str(
+                parsed.get("numero_identification")
+                or parsed.get("numeroDocument")
+                or parsed.get("numero_acte")
+                or parsed.get("numero")
+                or "UNKNOWN"
+            ).strip()
+            extracted["numero_identification"] = sanitize_identification(raw_numero) or "UNKNOWN"
         except Exception:
             pass
 
-    # 2. MATCH BASE EXISTANTE
-    matched = None
-    similarity = 0
-
-    if extracted["numero_identification"] != "UNKNOWN":
-        try:
-            matched = ActeEtatCivil.objects.select_related("citoyen", "centre").get(
-                citoyen__numero_identification=extracted["numero_identification"]
-            )
-            similarity = 100
-        except ActeEtatCivil.DoesNotExist:
-            matched = None
+    # 2. MATCH BASE EXISTANTE (comparaison souple, sans format SN imposé)
+    matched = find_acte_by_identification(extracted["numero_identification"])
+    similarity = 100 if matched else 0
 
     # 3. LOGIQUE FRAUDE DÉTAILLÉE
     fraud_score = 0

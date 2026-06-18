@@ -1,16 +1,6 @@
-from signalements.models import ActeEtatCivil
+from signalements.services.identification_utils import find_acte_by_identification
 
 
 def find_best_match(extracted):
-
     numero = extracted.get("numero_identification")
-
-    if not numero:
-        return None
-
-    try:
-        return ActeEtatCivil.objects.get(
-            citoyen__numero_identification=numero
-        )
-    except:
-        return None
+    return find_acte_by_identification(numero)
