@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from signalements.models import ActeEtatCivil
+from signalements.models.registre import RegistreEtatCivil
 
 
 class AnalyseIA(models.Model):
@@ -31,6 +32,14 @@ class AnalyseIA(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="matches"
+    )
+
+    matched_registre = models.ForeignKey(
+        RegistreEtatCivil,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="analyses",
     )
 
     similarity_score = models.FloatField(default=0)

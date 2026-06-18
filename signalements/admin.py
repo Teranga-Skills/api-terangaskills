@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from signalements.models.centre import Region, Commune, CentreEtatCivil
 from signalements.models.citoyen import Citoyen
+from signalements.models.registre import RegistreEtatCivil
 from signalements.models.acte import ActeEtatCivil
 from signalements.models.document import Document
 from signalements.models.alerte import Alerte
@@ -27,6 +28,22 @@ class CentreEtatCivilAdmin(admin.ModelAdmin):
     list_display = ("id", "code", "nom", "region", "commune", "telephone")
     list_filter = ("region", "commune")
     search_fields = ("nom", "code")
+
+
+@admin.register(RegistreEtatCivil)
+class RegistreEtatCivilAdmin(admin.ModelAdmin):
+    list_display = (
+        "numero_identification",
+        "nom",
+        "prenom",
+        "date_naissance",
+        "type_acte",
+        "centre",
+        "actif",
+        "created_at",
+    )
+    list_filter = ("type_acte", "actif", "centre")
+    search_fields = ("numero_identification", "nom", "prenom", "numero_acte_officiel")
 
 
 @admin.register(Citoyen)
@@ -67,30 +84,42 @@ class AnalyseIAAdmin(admin.ModelAdmin):
     list_display = ("id", "decision", "fraud_score", "risk_level", "model_used", "created_at")
     list_filter = ("decision", "risk_level", "model_used")
     search_fields = ("ocr_text", "extracted_data")
-    readonly_fields = ("details_comparaison", "ocr_text", "extracted_data", "acte", "matched_acte", "similarity_score", "fraud_score", "risk_level", "decision", "model_used", "created_at")
+    readonly_fields = (
+        "details_comparaison",
+        "ocr_text",
+        "extracted_data",
+        "acte",
+        "matched_acte",
+        "matched_registre",
+        "similarity_score",
+        "fraud_score",
+        "risk_level",
+        "decision",
+        "model_used",
+        "created_at",
+    )
     exclude = ()
 
-    @admin.display(description="Comparaison des données (Scannée vs Base SQL)")
+    @admin.display(description="Comparaison des données (Scannée vs Registre officiel)")
     def details_comparaison(self, obj):
         extracted = obj.extracted_data or {}
-        matched = obj.matched_acte
-        
+        registre = obj.matched_registre
+
         scan_id = extracted.get("numero_identification") or "N/A"
         scan_nom = extracted.get("nom") or "N/A"
         scan_prenom = extracted.get("prenom") or "N/A"
         scan_dob = extracted.get("date_naissance") or "N/A"
-        
-        if matched and matched.citoyen:
-            citoyen = matched.citoyen
-            base_id = citoyen.numero_identification or "N/A"
-            base_nom = citoyen.nom or "N/A"
-            base_prenom = citoyen.prenom or "N/A"
-            base_dob = citoyen.date_naissance.strftime("%d/%m/%Y") if citoyen.date_naissance else "N/A"
+
+        if registre:
+            base_id = registre.numero_identification or "N/A"
+            base_nom = registre.nom or "N/A"
+            base_prenom = registre.prenom or "N/A"
+            base_dob = registre.date_naissance.strftime("%d/%m/%Y") if registre.date_naissance else "N/A"
         else:
-            base_id = "Non trouvé"
-            base_nom = "Non trouvé"
-            base_prenom = "Non trouvé"
-            base_dob = "Non trouvé"
+            base_id = "Non trouvé dans le registre"
+            base_nom = "Non trouvé dans le registre"
+            base_prenom = "Non trouvé dans le registre"
+            base_dob = "Non trouvé dans le registre"
             
         def cell_style(diff):
             return "color: #dc2626; font-weight: bold; background-color: #fee2e2;" if diff else "color: #0f172a;"
@@ -107,7 +136,7 @@ class AnalyseIAAdmin(admin.ModelAdmin):
                     <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
                         <th style="padding: 12px; text-align: left; border-right: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Champ</th>
                         <th style="padding: 12px; text-align: left; border-right: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Données OCR Scannées</th>
-                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #334155;">Données de la Base (Originales)</th>
+                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #334155;">Registre officiel (Base)</th>
                     </tr>
                 </thead>
                 <tbody>

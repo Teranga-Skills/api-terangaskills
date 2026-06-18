@@ -2,10 +2,21 @@ import json
 import re
 from signalements.services.ocr import ocr_extract
 from signalements.services.identification_utils import (
-    find_acte_by_identification,
+    find_registre_by_identification,
     sanitize_identification,
 )
 from signalements.models import AnalyseIA
+
+
+def _matched_data_from_registre(entry):
+    return {
+        "nom": entry.nom,
+        "prenom": entry.prenom,
+        "date_naissance": entry.date_naissance.strftime("%d/%m/%Y") if entry.date_naissance else None,
+        "numero_identification": entry.numero_identification,
+        "type_acte": entry.type_acte,
+        "centre": entry.centre.nom if entry.centre else None,
+    }
 
 
 def run_pipeline(file, user):
@@ -15,12 +26,11 @@ def run_pipeline(file, user):
 
     data = ocr_result.get("choices", [{}])[0].get("message", {}).get("content", "{}")
 
-    # Parser le JSON extrait par l'OCR
     extracted = {
         "nom": "UNKNOWN",
         "prenom": "UNKNOWN",
         "date_naissance": "UNKNOWN",
-        "numero_identification": "UNKNOWN"
+        "numero_identification": "UNKNOWN",
     }
 
     if data:
@@ -30,11 +40,12 @@ def run_pipeline(file, user):
                 cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
                 cleaned = re.sub(r"\n```$", "", cleaned)
             parsed = json.loads(cleaned.strip())
-            
-            # Récupérer les données avec fallbacks
+
             extracted["nom"] = str(parsed.get("nom") or parsed.get("nom_famille") or "UNKNOWN").upper().strip()
             extracted["prenom"] = str(parsed.get("prenom") or parsed.get("prenoms") or "UNKNOWN").strip()
-            extracted["date_naissance"] = str(parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN").strip()
+            extracted["date_naissance"] = str(
+                parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN"
+            ).strip()
             raw_numero = str(
                 parsed.get("numero_identification")
                 or parsed.get("numeroDocument")
@@ -46,61 +57,49 @@ def run_pipeline(file, user):
         except Exception:
             pass
 
-    # 2. MATCH BASE EXISTANTE (comparaison souple, sans format SN imposé)
-    matched = find_acte_by_identification(extracted["numero_identification"])
+    # 2. Comparaison avec le registre officiel en base de données
+    matched = find_registre_by_identification(extracted["numero_identification"])
     similarity = 100 if matched else 0
 
-    # 3. LOGIQUE FRAUDE DÉTAILLÉE
+    # 3. Logique fraude
     fraud_score = 0
     decision = "VALID"
     risk_level = "LOW"
     matched_data = None
 
     if matched:
-        # Normalisation pour la comparaison
         ext_nom = extracted["nom"].upper().replace(" ", "")
         ext_prenom = extracted["prenom"].upper().replace(" ", "")
-        
-        base_nom = matched.citoyen.nom.upper().replace(" ", "")
-        base_prenom = matched.citoyen.prenom.upper().replace(" ", "")
+
+        base_nom = matched.nom.upper().replace(" ", "")
+        base_prenom = matched.prenom.upper().replace(" ", "")
 
         if ext_nom == base_nom and ext_prenom == base_prenom:
-            # CAS 2 : ID existe, nom et prénom correspondent exactement
             fraud_score = 15
             decision = "VALID"
             risk_level = "LOW"
         else:
-            # CAS 3 : ID existe, mais nom et/ou prénom diffèrent
             fraud_score = 50
             decision = "SUSPECT"
             risk_level = "MEDIUM"
 
-        # Préparer les données de comparaison
-        matched_data = {
-            "nom": matched.citoyen.nom,
-            "prenom": matched.citoyen.prenom,
-            "date_naissance": matched.citoyen.date_naissance.strftime("%d/%m/%Y") if matched.citoyen.date_naissance else None,
-            "numero_identification": matched.citoyen.numero_identification,
-            "type_acte": matched.type_acte,
-            "centre": matched.centre.nom if matched.centre else None,
-        }
+        matched_data = _matched_data_from_registre(matched)
     else:
-        # CAS 1 : ID n'existe pas du tout en base de données
         fraud_score = 95
         decision = "FRAUD"
         risk_level = "HIGH"
 
-    # 4. SAVE ANALYSE
     analyse = AnalyseIA.objects.create(
-        acte=matched if matched else None,
+        acte=None,
         ocr_text=str(ocr_result),
         extracted_data=extracted,
-        matched_acte=matched,
+        matched_acte=None,
+        matched_registre=matched,
         similarity_score=similarity,
         fraud_score=fraud_score,
         risk_level=risk_level,
         decision=decision,
-        model_used="openai/gpt-4o-mini"
+        model_used="openai/gpt-4o-mini",
     )
 
     return {
@@ -110,5 +109,5 @@ def run_pipeline(file, user):
         "similarity_score": similarity,
         "matched": bool(matched),
         "extracted_data": extracted,
-        "matched_data": matched_data
+        "matched_data": matched_data,
     }

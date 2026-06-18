@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Optional, Set
 
-from signalements.models import ActeEtatCivil
+from signalements.models import RegistreEtatCivil
 
 _PREFIXES_OPTIONNELS = ("SNP", "SN", "SEN", "ID", "NIN")
 
@@ -76,27 +76,27 @@ def identifications_match(a: Optional[str], b: Optional[str]) -> bool:
     return False
 
 
-def find_acte_by_identification(numero: Optional[str]) -> Optional[ActeEtatCivil]:
-    """Recherche un acte via le numéro d'identification du citoyen (comparaison souple)."""
+def find_registre_by_identification(numero: Optional[str]) -> Optional[RegistreEtatCivil]:
+    """Recherche une entrée du registre officiel via le numéro d'identification."""
     target_keys = identification_keys(numero)
     if not target_keys:
         return None
 
     numero_normalise = normalize_identification(numero)
-    correspondance_exacte: list[ActeEtatCivil] = []
-    correspondance_souple: list[ActeEtatCivil] = []
+    correspondance_exacte: list[RegistreEtatCivil] = []
+    correspondance_souple: list[RegistreEtatCivil] = []
 
-    queryset = ActeEtatCivil.objects.select_related("citoyen", "centre").all()
+    queryset = RegistreEtatCivil.objects.select_related("centre").filter(actif=True)
 
-    for acte in queryset:
-        citoyen_num = acte.citoyen.numero_identification
-        if not citoyen_num:
+    for entry in queryset:
+        entry_num = entry.numero_identification
+        if not entry_num:
             continue
 
-        if normalize_identification(citoyen_num) == numero_normalise:
-            correspondance_exacte.append(acte)
-        elif identifications_match(numero, citoyen_num):
-            correspondance_souple.append(acte)
+        if normalize_identification(entry_num) == numero_normalise:
+            correspondance_exacte.append(entry)
+        elif identifications_match(numero, entry_num):
+            correspondance_souple.append(entry)
 
     if correspondance_exacte:
         return correspondance_exacte[0]

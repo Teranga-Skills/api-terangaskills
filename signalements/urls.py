@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views.centre_views import CentreEtatCivilViewSet
 from .views.reference_views import RegionViewSet, CommuneViewSet
 from .views.citoyen_views import CitoyenViewSet
+from .views.registre_views import RegistreEtatCivilViewSet
 from .views.acte_views import ActeEtatCivilViewSet
 from .views.document_views import DocumentViewSet
 from signalements.views.synchronisation_views import (
@@ -26,6 +27,7 @@ router = DefaultRouter()
 router.register("documents", DocumentViewSet, basename="documents")
 router.register("actes", ActeEtatCivilViewSet, basename="actes")
 router.register("citoyens", CitoyenViewSet, basename="citoyens")
+router.register("registre", RegistreEtatCivilViewSet, basename="registre")
 router.register("regions", RegionViewSet, basename="regions")
 router.register("communes", CommuneViewSet, basename="communes")
 router.register("centres", CentreEtatCivilViewSet, basename="centres")
