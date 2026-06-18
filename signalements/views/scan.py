@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from signalements.services.pipeline import run_pipeline
+from signalements.services.pipeline import extract_from_document
 
 
 class ScanAPIView(APIView):
@@ -16,6 +16,6 @@ class ScanAPIView(APIView):
         if not file:
             return Response({"error": "document requis (clé 'document' ou 'file')"}, status=400)
 
-        result = run_pipeline(file, request.user)
+        result = extract_from_document(file)
 
         return Response(result)

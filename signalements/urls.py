@@ -12,6 +12,7 @@ from signalements.views.synchronisation_views import (
     StatutSynchronisationAPIView
 )
 from signalements.views.scan import ScanAPIView
+from signalements.views.analyse_registre_views import AnalyseRegistreAPIView
 from signalements.views.dashboard_views import (
     DashboardStatsAPIView,
     DashboardActesParCentreAPIView,
@@ -42,6 +43,7 @@ urlpatterns = [
 
     # SCAN IA
     path("scan/", ScanAPIView.as_view()),
+    path("analyse/", AnalyseRegistreAPIView.as_view()),
 
     # DASHBOARD
     path("dashboard/stats/", DashboardStatsAPIView.as_view()),

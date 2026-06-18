@@ -19,11 +19,7 @@ def _matched_data_from_registre(entry):
     }
 
 
-def run_pipeline(file, user):
-
-    # 1. OCR
-    ocr_result = ocr_extract(file)
-
+def _parse_ocr_content(ocr_result) -> dict:
     data = ocr_result.get("choices", [{}])[0].get("message", {}).get("content", "{}")
 
     extracted = {
@@ -33,43 +29,55 @@ def run_pipeline(file, user):
         "numero_identification": "UNKNOWN",
     }
 
-    if data:
-        try:
-            cleaned = data.strip()
-            if cleaned.startswith("```"):
-                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
-                cleaned = re.sub(r"\n```$", "", cleaned)
-            parsed = json.loads(cleaned.strip())
+    if not data:
+        return extracted
 
-            extracted["nom"] = str(parsed.get("nom") or parsed.get("nom_famille") or "UNKNOWN").upper().strip()
-            extracted["prenom"] = str(parsed.get("prenom") or parsed.get("prenoms") or "UNKNOWN").strip()
-            extracted["date_naissance"] = str(
-                parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN"
-            ).strip()
-            raw_numero = str(
-                parsed.get("numero_identification")
-                or parsed.get("numeroDocument")
-                or parsed.get("numero_acte")
-                or parsed.get("numero")
-                or "UNKNOWN"
-            ).strip()
-            extracted["numero_identification"] = sanitize_identification(raw_numero) or "UNKNOWN"
-        except Exception:
-            pass
+    try:
+        cleaned = data.strip()
+        if cleaned.startswith("```"):
+            cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
+            cleaned = re.sub(r"\n```$", "", cleaned)
+        parsed = json.loads(cleaned.strip())
 
-    # 2. Comparaison avec le registre officiel en base de données
-    matched = find_registre_by_identification(extracted["numero_identification"])
+        extracted["nom"] = str(parsed.get("nom") or parsed.get("nom_famille") or "UNKNOWN").upper().strip()
+        extracted["prenom"] = str(parsed.get("prenom") or parsed.get("prenoms") or "UNKNOWN").strip()
+        extracted["date_naissance"] = str(
+            parsed.get("date_naissance") or parsed.get("dateNaissance") or "UNKNOWN"
+        ).strip()
+        raw_numero = str(
+            parsed.get("numero_identification")
+            or parsed.get("numeroDocument")
+            or parsed.get("numero_acte")
+            or parsed.get("numero")
+            or "UNKNOWN"
+        ).strip()
+        extracted["numero_identification"] = sanitize_identification(raw_numero) or "UNKNOWN"
+    except Exception:
+        pass
+
+    return extracted
+
+
+def extract_from_document(file) -> dict:
+    """Extraction OCR uniquement — sans comparaison ni score."""
+    ocr_result = ocr_extract(file)
+    extracted = _parse_ocr_content(ocr_result)
+    return {"extracted_data": extracted}
+
+
+def run_analysis(extracted: dict, user=None, ocr_text: str | None = None) -> dict:
+    """Compare les données extraites/saisies avec le registre officiel en base."""
+    matched = find_registre_by_identification(extracted.get("numero_identification"))
     similarity = 100 if matched else 0
 
-    # 3. Logique fraude
     fraud_score = 0
     decision = "VALID"
     risk_level = "LOW"
     matched_data = None
 
     if matched:
-        ext_nom = extracted["nom"].upper().replace(" ", "")
-        ext_prenom = extracted["prenom"].upper().replace(" ", "")
+        ext_nom = str(extracted.get("nom", "UNKNOWN")).upper().replace(" ", "")
+        ext_prenom = str(extracted.get("prenom", "UNKNOWN")).upper().replace(" ", "")
 
         base_nom = matched.nom.upper().replace(" ", "")
         base_prenom = matched.prenom.upper().replace(" ", "")
@@ -91,7 +99,7 @@ def run_pipeline(file, user):
 
     analyse = AnalyseIA.objects.create(
         acte=None,
-        ocr_text=str(ocr_result),
+        ocr_text=ocr_text or json.dumps(extracted, ensure_ascii=False),
         extracted_data=extracted,
         matched_acte=None,
         matched_registre=matched,
@@ -111,3 +119,10 @@ def run_pipeline(file, user):
         "extracted_data": extracted,
         "matched_data": matched_data,
     }
+
+
+def run_pipeline(file, user):
+    """Compatibilité : extraction OCR + analyse en une seule passe."""
+    ocr_result = ocr_extract(file)
+    extracted = _parse_ocr_content(ocr_result)
+    return run_analysis(extracted, user=user, ocr_text=str(ocr_result))

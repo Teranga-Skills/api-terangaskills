@@ -58,9 +58,9 @@ Règles d'extraction :
    - Convertir systématiquement la date au format JJ/MM/AAAA.
 3. Pour le numéro d'identification :
    - Rechercher tout identifiant administratif pertinent (CNI, acte, passeport, etc.).
-   - Le numéro doit toujours commencer par un chiffre (pas de lettre en tête).
-   - Retirer tout préfixe alphabétique (ex. « SN », « P », « TS ») et ne conserver que la partie numérique.
-   - Conserver tirets ou chiffres tels qu'affichés si possible.
+   - Extraire le numéro COMPLET tel qu'il apparaît sur le document : tous les chiffres, segments et tirets, sans troncature ni omission.
+   - Le numéro doit commencer par un chiffre (retirer uniquement un éventuel préfixe alphabétique en tête, ex. « SN », « P »).
+   - Conserver l'intégralité de la séquence numérique après le premier chiffre.
 4. Si une information est absente, illisible ou non identifiable avec certitude, retourner null.
 5. Ne jamais inventer ni déduire une valeur.
 6. Ignorer les informations concernant les parents, témoins, agents municipaux, maires ou officiers d'état civil.
