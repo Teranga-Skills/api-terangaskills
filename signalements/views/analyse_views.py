@@ -16,6 +16,8 @@ class AnalyseListAPIView(APIView):
         analyses = AnalyseIA.objects.all().order_by("-created_at")
         serializer = AnalyseIASerializer(analyses, many=True)
 
+        print(f'Payload: {serializer.data}')
+
         return Response(serializer.data)
 
 

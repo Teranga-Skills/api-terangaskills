@@ -24,13 +24,36 @@ class ActeEtatCivilSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["numero_acte", "statut", "agent"]
 
+    # def get_derniere_analyse(self, obj):
+    #     from signalements.models import AnalyseIA
+    #     from signalements.serializers.analyse_serializer import AnalyseIASerializer
+    #     analyse = AnalyseIA.objects.filter(acte=obj).order_by("-created_at").first()
+    #     if analyse:
+    #         return AnalyseIASerializer(analyse).data
+    #     return None
+
     def get_derniere_analyse(self, obj):
-        from signalements.models import AnalyseIA
-        from signalements.serializers.analyse_serializer import AnalyseIASerializer
-        analyse = AnalyseIA.objects.filter(acte=obj).order_by("-created_at").first()
-        if analyse:
-            return AnalyseIASerializer(analyse).data
-        return None
+        try:
+            from signalements.models import AnalyseIA
+            from signalements.serializers.analyse_serializer import AnalyseIASerializer
+
+            analyse = (
+                AnalyseIA.objects
+                .filter(acte=obj)
+                .order_by("-id")
+                .first()
+            )
+
+            if not analyse:
+                return None
+
+            try:
+                return AnalyseIASerializer(analyse).data
+            except Exception:
+                return None
+
+        except Exception:
+            return None
 
     def create(self, validated_data):
         request = self.context["request"]
