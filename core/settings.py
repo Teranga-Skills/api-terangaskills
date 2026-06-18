@@ -87,7 +87,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
-    "TOKEN_OBTAIN_SERIALIZER": "apps.users.serializers.LoginSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.LoginSerializer",
 }
 
 MIDDLEWARE = [

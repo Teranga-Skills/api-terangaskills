@@ -41,30 +41,53 @@ def run_pipeline(file, user):
     similarity = 0
 
     if extracted["numero_identification"] != "UNKNOWN":
-
         try:
-            matched = ActeEtatCivil.objects.get(
+            matched = ActeEtatCivil.objects.select_related("citoyen", "centre").get(
                 citoyen__numero_identification=extracted["numero_identification"]
             )
             similarity = 100
         except ActeEtatCivil.DoesNotExist:
             matched = None
 
-    # 3. LOGIQUE FRAUDE SIMPLE
+    # 3. LOGIQUE FRAUDE DÉTAILLÉE
     fraud_score = 0
     decision = "VALID"
+    risk_level = "LOW"
+    matched_data = None
 
     if matched:
+        # Normalisation pour la comparaison
+        ext_nom = extracted["nom"].upper().replace(" ", "")
+        ext_prenom = extracted["prenom"].upper().replace(" ", "")
+        
+        base_nom = matched.citoyen.nom.upper().replace(" ", "")
+        base_prenom = matched.citoyen.prenom.upper().replace(" ", "")
 
-        if (
-            extracted["nom"] != matched.citoyen.nom or
-            extracted["prenom"] != matched.citoyen.prenom
-        ):
-            fraud_score = 95
-            decision = "FRAUD"
-        else:
-            fraud_score = 20
+        if ext_nom == base_nom and ext_prenom == base_prenom:
+            # CAS 2 : ID existe, nom et prénom correspondent exactement
+            fraud_score = 15
             decision = "VALID"
+            risk_level = "LOW"
+        else:
+            # CAS 3 : ID existe, mais nom et/ou prénom diffèrent
+            fraud_score = 50
+            decision = "SUSPECT"
+            risk_level = "MEDIUM"
+
+        # Préparer les données de comparaison
+        matched_data = {
+            "nom": matched.citoyen.nom,
+            "prenom": matched.citoyen.prenom,
+            "date_naissance": matched.citoyen.date_naissance.strftime("%d/%m/%Y") if matched.citoyen.date_naissance else None,
+            "numero_identification": matched.citoyen.numero_identification,
+            "type_acte": matched.type_acte,
+            "centre": matched.centre.nom if matched.centre else None,
+        }
+    else:
+        # CAS 1 : ID n'existe pas du tout en base de données
+        fraud_score = 95
+        decision = "FRAUD"
+        risk_level = "HIGH"
 
     # 4. SAVE ANALYSE
     analyse = AnalyseIA.objects.create(
@@ -74,7 +97,7 @@ def run_pipeline(file, user):
         matched_acte=matched,
         similarity_score=similarity,
         fraud_score=fraud_score,
-        risk_level="HIGH" if fraud_score > 70 else "LOW",
+        risk_level=risk_level,
         decision=decision,
         model_used="openai/gpt-4o-mini"
     )
@@ -85,5 +108,6 @@ def run_pipeline(file, user):
         "fraud_score": fraud_score,
         "similarity_score": similarity,
         "matched": bool(matched),
-        "extracted_data": extracted
+        "extracted_data": extracted,
+        "matched_data": matched_data
     }
