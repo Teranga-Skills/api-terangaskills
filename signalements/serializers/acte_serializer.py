@@ -6,7 +6,8 @@ from signalements.services.acte_service import generer_numero_acte
 
 class ActeEtatCivilSerializer(serializers.ModelSerializer):
     derniere_analyse = serializers.SerializerMethodField()
-    analyse_id = serializers.UUIDField(required=False, write_only=True)
+    analyse_id = serializers.UUIDField(required=False, write_only=True, allow_null=True)
+
 
     class Meta:
         model = ActeEtatCivil
