@@ -12,6 +12,11 @@ class ActeEtatCivil(models.Model):
         ("NAISSANCE", "Naissance"),
         ("MARIAGE", "Mariage"),
         ("DECES", "Décès"),
+        ('CIN', "Carte d'identité"),
+        ('PASSEPORT', 'Passeport'),
+        ('PERMIS_CONDUIRE', 'Permis de conduire'),
+        ('CASIER_JUDICIAIRE', 'Casier Judiciaire'),
+        ('TITRE_SEJOUR','Titre de séjour')
     )
 
     STATUT = (
