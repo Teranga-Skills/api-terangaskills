@@ -12,7 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
+
+import dj_database_url
+from corsheaders.defaults import default_headers
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,13 +29,20 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-fallback-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://api-terangaskills.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://10.0.2.2:8000",
+]
 
 # Application definition
 
@@ -46,9 +58,43 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'drf_spectacular',
+
+    'users',
+    'signalements',
 ]
 
+AUTH_USER_MODEL = "users.CustomUser"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.LoginSerializer",
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -57,6 +103,20 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+]
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Teranga Skills',
+    'DESCRIPTION': 'API REST - Système de vigilance citoyenne assistée',
+    'VERSION':     '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # n'inclut pas le schéma lui-même dans le schéma
+}
 
 ROOT_URLCONF = 'core.urls'
 
@@ -81,16 +141,32 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# DATABASE_URL = os.getenv("DATABASE_URL")
+
+# if DATABASE_URL:
+#     # Production (Render)
+#     DATABASES = {
+#         "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+#     }
+# else:
+#     # Développement local
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.getenv("DB_NAME"),
+#             "USER": os.getenv("DB_USER"),
+#             "PASSWORD": os.getenv("DB_PASSWORD"),
+#             "HOST": os.getenv("DB_HOST"),
+#             "PORT": os.getenv("DB_PORT"),
+#         }
+#     }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -127,3 +203,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # affiche dans le terminal en dev
+DEFAULT_FROM_EMAIL = "no-reply@example.com"
+FRONTEND_URL = "http://localhost:3000"
+PASSWORD_RESET_TIMEOUT = 259200  # 3 jours
+
+# Fichiers statiques avec Whitenoise
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
